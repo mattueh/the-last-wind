@@ -4,15 +4,14 @@
 
 # [Project Name] 🎯
 
-xrtdgr
+
 ## Basic Details
 ### Team Name: [Name]
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
-- Member 2: [Name] - [College]
-- Member 3: [Name] - [College]
+- Member 1: [Name] - [Jain Univer]
+- Member 2: [Name] - [Jain]
 
 ### Project Description
 [2-3 lines about what your project does]
