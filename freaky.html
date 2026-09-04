@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fan Deceleration Monitor (2.25s Window)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex flex-col items-center font-sans">
+
+  <div class="max-w-5xl w-full flex flex-col gap-6">
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-4 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-sky-400">Fan Deceleration Live Tracker</h1>
+        <p class="text-slate-400 text-sm">Real-time 0.25s Telemetry (20-Second History Window)</p>
+      </div>
+      <button id="connectBtn" class="bg-sky-500 hover:bg-sky-600 px-5 py-2.5 rounded-lg font-semibold text-white transition shadow-lg">
+        Connect Arduino
+      </button>
+    </header>
+
+    <!-- Main Telemetry KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md">
+        <span class="text-slate-400 text-xs uppercase font-semibold tracking-wider">Est. Time to Stop</span>
+        <div class="text-4xl font-black text-amber-400 mt-2" id="timeToStopVal">-- s</div>
+      </div>
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md">
+        <span class="text-slate-400 text-xs uppercase font-semibold tracking-wider">Current RPM</span>
+        <div class="text-4xl font-black text-emerald-400 mt-2" id="rpmVal">--</div>
+      </div>
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md">
+        <span class="text-slate-400 text-xs uppercase font-semibold tracking-wider">Speed (rot/sec)</span>
+        <div class="text-4xl font-black text-cyan-400 mt-2" id="speedVal">--</div>
+      </div>
+      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md">
+        <span class="text-slate-400 text-xs uppercase font-semibold tracking-wider">Deceleration</span>
+        <div class="text-4xl font-black text-indigo-400 mt-2" id="decelVal">-- rot/s²</div>
+      </div>
+    </div>
+
+    <!-- Fixed Countdown Banner -->
+    <div id="etaBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        <span class="relative flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+        </span>
+        <span class="font-semibold text-amber-300">Fixed Constant Deceleration Estimate Locked!</span>
+        <span class="text-slate-300 text-sm hidden md:inline">Calculated from 2.25s constant decay window (+5s added).</span>
+      </div>
+      <div class="text-slate-200 text-sm font-medium">
+        Predicted Stop In: <span id="etaCountdownVal" class="text-amber-400 font-bold text-lg font-mono">--s</span>
+      </div>
+    </div>
+
+    <!-- Controls & Device Status -->
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4 shadow-md">
+      <div class="flex items-center gap-3">
+        <span class="relative flex h-3 w-3">
+          <span id="statusPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+          <span id="statusDot" class="relative inline-flex rounded-full h-3 w-3 bg-slate-500"></span>
+        </span>
+        <span class="text-slate-400 text-sm">Status:</span>
+        <span id="statusText" class="font-semibold text-slate-200">Disconnected</span>
+      </div>
+      <button id="startBtn" disabled class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 px-8 py-3 rounded-lg font-bold text-white transition shadow-lg">
+        Start Monitoring
+      </button>
+    </div>
+
+    <!-- Live Decay Line Chart -->
+    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-md">
+      <h2 class="text-lg font-semibold mb-4 text-slate-300">Live Speed Decay Curve (20s Trailing History)</h2>
+      <canvas id="liveChart" class="w-full max-h-72"></canvas>
+    </div>
+  </div>
+
+  <script>
+    let port, writer, reader;
+    let sampleCount = 0;
+    
+    // Retains trailing 20 seconds of data (80 points * 0.25s cadence)
+    const maxDataPoints = 80; 
+
+    // Deceleration Detection: 9 samples * 0.25s cadence = 2.25 SECONDS WINDOW
+    const WINDOW_SIZE = 9; 
+    const recentSpeeds = [];
+    const recentTimes = [];
+    
+    let isEstimateLocked = false; 
+    let targetStopTimeMs = null; 
+
+    const connectBtn = document.getElementById('connectBtn');
+    const startBtn = document.getElementById('startBtn');
+    const statusText = document.getElementById('statusText');
+    const statusDot = document.getElementById('statusDot');
+    const statusPing = document.getElementById('statusPing');
+    const etaBanner = document.getElementById('etaBanner');
+    const etaCountdownVal = document.getElementById('etaCountdownVal');
+
+    // Chart.js Configuration
+    const ctx = document.getElementById('liveChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Speed (rotations / sec)',
+          data: [],
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56, 189, 248, 0.15)',
+          fill: true,
+          pointRadius: 2,
+          borderWidth: 2,
+          tension: 0.15
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          y: { 
+            beginAtZero: true, 
+            grid: { color: '#334155' },
+            ticks: { color: '#94a3b8' }
+          },
+          x: { 
+            grid: { color: '#334155' },
+            ticks: { 
+              color: '#94a3b8',
+              maxTicksLimit: 10
+            }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: '#cbd5e1' } }
+        }
+      }
+    });
+
+    // Handle USB Web Serial Connection
+    connectBtn.addEventListener('click', async () => {
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+        
+        statusText.innerText = "Connected & Ready";
+        statusDot.className = "relative inline-flex rounded-full h-3 w-3 bg-emerald-500";
+        statusPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+        
+        connectBtn.innerText = "Arduino Connected";
+        connectBtn.classList.replace('bg-sky-500', 'bg-slate-700');
+        startBtn.disabled = false;
+
+        const textEncoder = new TextEncoderStream();
+        textEncoder.readable.pipeTo(port.writable);
+        writer = textEncoder.writable.getWriter();
+
+        readLoop();
+      } catch (err) {
+        alert("Serial Connection Failed: " + err);
+      }
+    });
+
+    // Reset tracking state on new test trigger
+    startBtn.addEventListener('click', async () => {
+      if (writer) {
+        sampleCount = 0;
+        recentSpeeds.length = 0;
+        recentTimes.length = 0;
+        
+        isEstimateLocked = false;
+        targetStopTimeMs = null;
+        etaBanner.classList.add('hidden');
+        
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.update();
+        await writer.write("start\n");
+      }
+    });
+
+    // Stream Reader Loop
+    async function readLoop() {
+      const textDecoder = new TextDecoderStream();
+      port.readable.pipeTo(textDecoder.writable);
+      reader = textDecoder.readable.getReader();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += value;
+        let lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (let line of lines) {
+          parseData(line.trim());
+        }
+      }
+    }
+
+    /**
+     * Confirms STABLE, CONSTANT deceleration over the 2.25s window.
+     * Evaluates both slope negative magnitude and R-squared linearity.
+     */
+    function isConstantDeceleration(times, speeds) {
+      if (speeds.length < WINDOW_SIZE) return false;
+      
+      const n = speeds.length;
+      let sumT = 0, sumW = 0, sumTW = 0, sumT2 = 0;
+      const t0 = times[0];
+
+      for (let i = 0; i < n; i++) {
+        const t = times[i] - t0;
+        sumT += t;
+        sumW += speeds[i];
+        sumTW += t * speeds[i];
+        sumT2 += t * t;
+      }
+
+      const slope = (n * sumTW - sumT * sumW) / (n * sumT2 - sumT * sumT);
+      const intercept = (sumW - slope * sumT) / n;
+
+      // 1. Must have a clear negative slope (active drop)
+      if (slope >= -0.10) return false;
+
+      // 2. Linear fit test (R^2 > 0.85) to ensure deceleration rate is stable/constant
+      let ssTot = 0, ssRes = 0;
+      const meanW = sumW / n;
+
+      for (let i = 0; i < n; i++) {
+        const t = times[i] - t0;
+        const predictedW = slope * t + intercept;
+        ssTot += Math.pow(speeds[i] - meanW, 2);
+        ssRes += Math.pow(speeds[i] - predictedW, 2);
+      }
+
+      const rSquared = ssTot > 0 ? 1 - (ssRes / ssTot) : 0;
+
+      // Accepts prediction only if deceleration curve is steadily linear
+      return rSquared >= 0.85; 
+    }
+
+    /**
+     * STABLE ESTIMATOR:
+     * Fits dw/dt across 2.25s window and computes stop time.
+     */
+    function computeFixedEstimate(times, speeds, currentSpeed) {
+      if (currentSpeed <= 0.1) return 0;
+
+      const n = speeds.length;
+      let sumT = 0, sumW = 0, sumTW = 0, sumT2 = 0;
+      const t0 = times[0];
+
+      for (let i = 0; i < n; i++) {
+        const t = times[i] - t0;
+        sumT += t;
+        sumW += speeds[i];
+        sumTW += t * speeds[i];
+        sumT2 += t * t;
+      }
+
+      // Linear Deceleration rate (rot/s²) over the 2.25s window
+      const decelRate = Math.abs((n * sumTW - sumT * sumW) / (n * sumT2 - sumT * sumT));
+
+      if (decelRate < 0.08 || isNaN(decelRate)) return null;
+
+      // 1. Pure linear time under constant drag (t = v / a)
+      const linearTime = currentSpeed / decelRate;
+
+      // 2. Exponential air drag factor (decay dampening)
+      const k = decelRate / Math.max(currentSpeed, 0.5);
+      const expTime = Math.log(currentSpeed / 0.1) / Math.max(k, 0.01);
+
+      // 3. Weighted physical estimate (80% bearing friction, 20% air drag)
+      let estimatedSec = (linearTime * 0.80) + (expTime * 0.20);
+
+      // Hard bounds prevent mathematical runaway
+      return Math.min(Math.max(estimatedSec, 2.0), 120.0);
+    }
+
+    // Process Inbound Telemetry JSON
+    function parseData(jsonString) {
+      try {
+        const data = JSON.parse(jsonString);
+        if (data.status) statusText.innerText = data.status;
+
+        if (data.speed !== undefined) {
+          sampleCount++;
+          const currentTime = sampleCount * 0.25;
+
+          // Maintain the 2.25s observation window until locked
+          if (!isEstimateLocked) {
+            recentSpeeds.push(data.speed);
+            recentTimes.push(currentTime);
+            if (recentSpeeds.length > WINDOW_SIZE) {
+              recentSpeeds.shift();
+              recentTimes.shift();
+            }
+
+            // Lock in calculation once 2.25 seconds of CONSTANT deceleration are verified
+            if (isConstantDeceleration(recentTimes, recentSpeeds)) {
+              const fixedEtaSec = computeFixedEstimate(recentTimes, recentSpeeds, data.speed);
+              
+              if (fixedEtaSec !== null && fixedEtaSec > 0) {
+                targetStopTimeMs = Date.now() + ((fixedEtaSec + 5) * 1000); // <-- DIRECT +5 SECONDS ADDED HERE
+                isEstimateLocked = true;
+                etaBanner.classList.remove('hidden');
+              }
+            }
+          }
+
+          // Fixed countdown execution loop
+          if (isEstimateLocked && targetStopTimeMs) {
+            const remainingSec = Math.max(0, (targetStopTimeMs - Date.now()) / 1000);
+            const formattedSec = remainingSec.toFixed(1) + "s";
+            
+            document.getElementById('timeToStopVal').innerText = formattedSec;
+            etaCountdownVal.innerText = formattedSec;
+
+            if (remainingSec <= 0 || data.speed < 0.05) {
+              document.getElementById('timeToStopVal').innerText = "0.0s";
+              etaCountdownVal.innerText = "0.0s (Stopped)";
+            }
+          } else {
+            document.getElementById('timeToStopVal').innerText = (data.timeToStop !== undefined) 
+              ? data.timeToStop.toFixed(1) + " s" 
+              : "-- s";
+          }
+
+          // Update standard telemetry KPI metrics
+          document.getElementById('rpmVal').innerText = data.rpm.toLocaleString();
+          document.getElementById('speedVal').innerText = data.speed.toFixed(1);
+          document.getElementById('decelVal').innerText = data.decel.toFixed(2) + " rot/s²";
+
+          // Live Chart update
+          chart.data.labels.push(currentTime.toFixed(2) + "s");
+          chart.data.datasets[0].data.push(data.speed);
+
+          if (chart.data.labels.length > maxDataPoints) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+          }
+
+          chart.update();
+        }
+      } catch (e) {
+        // Ignores non-JSON system logs
+      }
+    }
+  </script>
+</body>
+</html>
