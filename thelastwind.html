@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fan check</title>
+<style>
+  :root{
+    --white:#f4f4f4;
+    --black:#000000;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--black);
+    color:var(--white);
+    min-height:100%;
+  }
+
+  body{
+    font-family:"Arial Narrow","Helvetica Neue Condensed","Arial",sans-serif;
+    text-transform:lowercase;
+    letter-spacing:-0.01em;
+    -webkit-font-smoothing:none;
+    font-smooth:never;
+    overflow-x:hidden;
+    filter:blur(0.35px) contrast(1.05);
+  }
+
+  ::selection{
+    background:var(--white);
+    color:var(--black);
+  }
+
+  a{color:var(--white);}
+
+  .grain{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:50;
+    opacity:0.05;
+    mix-blend-mode:screen;
+  }
+
+  .wrap{
+    max-width:640px;
+    margin:0 auto;
+    padding:9vh 22px 12vh;
+  }
+
+  .title{
+    margin:0 0 56px;
+  }
+
+  .title-line{
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    font-size:clamp(38px, 9vw, 74px);
+    font-weight:400;
+    line-height:0.98;
+    letter-spacing:-0.03em;
+    text-shadow:
+      0 0 1.5px rgba(244,244,244,0.9),
+      1.5px 1px 0 rgba(244,244,244,0.2),
+      -1px 0.5px 0 rgba(244,244,244,0.14);
+    transform:scaleY(1.05) scaleX(0.94);
+    filter:blur(0.5px);
+  }
+
+  .title-line.single{
+    justify-content:flex-start;
+  }
+
+  .stage{
+    display:flex;
+    flex-direction:column;
+    border:1px solid var(--white);
+    padding:10px;
+    margin-bottom:56px;
+    aspect-ratio:4/3;
+    overflow:hidden;
+    background:#000;
+  }
+
+  .stage canvas{
+    width:100%;
+    flex:1;
+    display:block;
+    min-height:0;
+  }
+
+  .axis-y{
+    font-size:11px;
+    opacity:0.55;
+    margin-bottom:10px;
+  }
+
+  .axis-x{
+    font-size:11px;
+    opacity:0.55;
+    margin-top:10px;
+    text-align:right;
+  }
+
+  .connect-row{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:26px;
+  }
+
+  button#connectBtn{
+    font-family:inherit;
+    text-transform:lowercase;
+    letter-spacing:-0.02em;
+    background:transparent;
+    color:var(--white);
+    border:1px solid var(--white);
+    padding:10px 22px;
+    font-size:15px;
+    cursor:pointer;
+    filter:blur(0.3px);
+  }
+
+  button#connectBtn:hover{
+    background:var(--white);
+    color:var(--black);
+  }
+
+  button#connectBtn:disabled{
+    opacity:0.35;
+    cursor:default;
+  }
+
+  button#connectBtn:disabled:hover{
+    background:transparent;
+    color:var(--white);
+  }
+
+  .status-text{
+    font-size:13px;
+    opacity:0.55;
+  }
+
+  .controls{
+    display:flex;
+    align-items:stretch;
+    gap:22px;
+    margin-bottom:20px;
+    min-height:76px;
+  }
+
+  button#startBtn{
+    font-family:inherit;
+    text-transform:lowercase;
+    letter-spacing:-0.02em;
+    background:transparent;
+    color:var(--white);
+    border:1px solid var(--white);
+    padding:0 40px;
+    font-size:22px;
+    cursor:pointer;
+    filter:blur(0.3px);
+    flex:0 0 auto;
+  }
+
+  button#startBtn:hover{
+    background:var(--white);
+    color:var(--black);
+  }
+
+  button#startBtn:disabled{
+    opacity:0.35;
+    cursor:default;
+  }
+
+  button#startBtn:disabled:hover{
+    background:transparent;
+    color:var(--white);
+  }
+
+  .readout-block{
+    flex:0 0 auto;
+    width:210px;
+    margin-left:auto;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:6px 0;
+  }
+
+  .readout-row{
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    font-size:22px;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-0.01em;
+  }
+
+  .result-line{
+    font-size:22px;
+    min-height:28px;
+    opacity:0.85;
+    margin-bottom:60px;
+  }
+
+  footer{
+    font-size:22px;
+    opacity:0.7;
+    text-align:left;
+  }
+
+  .footer-line{
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    padding:5px 0;
+  }
+
+  .footer-line.single{
+    justify-content:flex-start;
+  }
+
+  .footer-line.made-by{
+    justify-content:flex-start;
+    align-items:baseline;
+    gap:8px;
+  }
+
+  .footer-line.made-by .accent{
+    font-size:22px;
+    opacity:1;
+    color:var(--white);
+  }
+
+  @media (max-width:480px){
+    .wrap{padding:8vh 16px 10vh;}
+  }
+</style>
+</head>
+<body>
+
+<canvas class="grain" id="pageGrain"></canvas>
+
+<div class="wrap">
+
+  <div class="title">
+    <div class="title-line"><span>find</span><span>how</span></div>
+    <div class="title-line"><span>long</span><span>it</span><span>takes</span></div>
+    <div class="title-line"><span>your</span><span>fan</span><span>to</span></div>
+    <div class="title-line"><span>stop</span><span>spinning</span></div>
+  </div>
+
+  <div class="stage">
+    <span class="axis-y">rpm</span>
+    <canvas id="graphCanvas"></canvas>
+    <span class="axis-x">time</span>
+  </div>
+
+  <div class="connect-row">
+    <button id="connectBtn">connect device</button>
+    <span class="status-text" id="statusText">not connected</span>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn" disabled>start</button>
+    <div class="readout-block">
+      <div class="readout-row"><span>rpm</span><span id="rpmVal">--</span></div>
+      <div class="readout-row"><span>eta</span><span id="etaVal">--</span></div>
+    </div>
+  </div>
+
+  <div class="result-line" id="resultLine"></div>
+
+  <footer>
+    <div class="footer-line made-by"><span>made</span><span class="accent">by</span></div>
+    <div class="footer-line single"><span>mathew</span></div>
+    <div class="footer-line single"><span>navin</span></div>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  // ---------- page grain (subtle, whole page) ----------
+  const pageGrain = document.getElementById('pageGrain');
+  const pgx = pageGrain.getContext('2d');
+  function sizePageGrain(){
+    pageGrain.width = window.innerWidth;
+    pageGrain.height = window.innerHeight;
+  }
+  sizePageGrain();
+  window.addEventListener('resize', sizePageGrain);
+
+  function drawPageGrain(){
+    const w = pageGrain.width, h = pageGrain.height;
+    const imgData = pgx.createImageData(w, h);
+    const buf = imgData.data;
+    for(let i=0;i<buf.length;i+=4){
+      const v = Math.random()*255;
+      buf[i]=v; buf[i+1]=v; buf[i+2]=v; buf[i+3]=18;
+    }
+    pgx.putImageData(imgData,0,0);
+  }
+  setInterval(drawPageGrain, 140);
+
+  // ---------- graph ----------
+  const graphCanvas = document.getElementById('graphCanvas');
+  const gctx = graphCanvas.getContext('2d');
+  let dataPoints = [];
+
+  function sizeGraph(){
+    const rect = graphCanvas.parentElement.getBoundingClientRect();
+    graphCanvas.width = rect.width;
+    graphCanvas.height = rect.height;
+    drawGraph();
+  }
+  window.addEventListener('resize', sizeGraph);
+
+  function drawGraph(){
+    const w = graphCanvas.width, h = graphCanvas.height;
+    gctx.clearRect(0,0,w,h);
+    if(dataPoints.length < 2) return;
+
+    const maxT = dataPoints[dataPoints.length-1].t || 1;
+    const maxR = Math.max(...dataPoints.map(p=>p.rpm), 1);
+
+    gctx.strokeStyle = '#f4f4f4';
+    gctx.lineWidth = 1.6;
+    gctx.beginPath();
+    dataPoints.forEach((p, idx)=>{
+      const x = (p.t / maxT) * (w-16) + 8;
+      const y = h - (p.rpm / maxR) * (h-16) - 8;
+      if(idx===0) gctx.moveTo(x,y);
+      else gctx.lineTo(x,y);
+    });
+    gctx.stroke();
+  }
+
+  function fmt(n, d=2){
+    return n.toFixed(d);
+  }
+
+  // ---------- elements ----------
+  const connectBtn = document.getElementById('connectBtn');
+  const startBtn = document.getElementById('startBtn');
+  const statusText = document.getElementById('statusText');
+  const rpmVal = document.getElementById('rpmVal');
+  const etaVal = document.getElementById('etaVal');
+  const resultLine = document.getElementById('resultLine');
+
+  // ---------- serial state ----------
+  let port, writer, reader;
+  let sampleCount = 0;
+
+  // deceleration-lock detection window: 9 samples at 0.25s cadence = 2.25s
+  const WINDOW_SIZE = 9;
+  const recentSpeeds = [];
+  const recentTimes = [];
+
+  let isEstimateLocked = false;
+  let targetStopTimeMs = null;
+  let lockedEtaTotal = null;
+  let etaTickHandle = null;
+
+  // ---------- connect to device over web serial ----------
+  connectBtn.addEventListener('click', async ()=>{
+    try{
+      port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 115200 });
+
+      statusText.textContent = 'connected';
+      connectBtn.textContent = 'connected';
+      connectBtn.disabled = true;
+      startBtn.disabled = false;
+
+      const textEncoder = new TextEncoderStream();
+      textEncoder.readable.pipeTo(port.writable);
+      writer = textEncoder.writable.getWriter();
+
+      readLoop();
+    }catch(err){
+      statusText.textContent = 'connection failed';
+    }
+  });
+
+  async function readLoop(){
+    const textDecoder = new TextDecoderStream();
+    port.readable.pipeTo(textDecoder.writable);
+    reader = textDecoder.readable.getReader();
+    let buffer = '';
+
+    while(true){
+      const { value, done } = await reader.read();
+      if(done) break;
+      buffer += value;
+      let lines = buffer.split('\n');
+      buffer = lines.pop();
+      for(const line of lines){
+        parseData(line.trim());
+      }
+    }
+  }
+
+  // ---------- start a run ----------
+  startBtn.addEventListener('click', async ()=>{
+    if(!writer) return;
+    sampleCount = 0;
+    recentSpeeds.length = 0;
+    recentTimes.length = 0;
+    isEstimateLocked = false;
+    targetStopTimeMs = null;
+    lockedEtaTotal = null;
+    if(etaTickHandle) cancelAnimationFrame(etaTickHandle);
+
+    dataPoints = [];
+    drawGraph();
+    rpmVal.textContent = '--';
+    etaVal.textContent = '--';
+    resultLine.textContent = '';
+    statusText.textContent = 'measuring';
+
+    await writer.write('start\n');
+  });
+
+  // ---------- confirms stable, constant deceleration over the window ----------
+  function isConstantDeceleration(times, speeds){
+    if(speeds.length < WINDOW_SIZE) return false;
+
+    const n = speeds.length;
+    let sumT=0, sumW=0, sumTW=0, sumT2=0;
+    const t0 = times[0];
+
+    for(let i=0;i<n;i++){
+      const t = times[i]-t0;
+      sumT += t; sumW += speeds[i]; sumTW += t*speeds[i]; sumT2 += t*t;
+    }
+
+    const slope = (n*sumTW - sumT*sumW) / (n*sumT2 - sumT*sumT);
+    const intercept = (sumW - slope*sumT) / n;
+
+    if(slope >= -0.10) return false;
+
+    let ssTot=0, ssRes=0;
+    const meanW = sumW/n;
+    for(let i=0;i<n;i++){
+      const t = times[i]-t0;
+      const predictedW = slope*t + intercept;
+      ssTot += Math.pow(speeds[i]-meanW, 2);
+      ssRes += Math.pow(speeds[i]-predictedW, 2);
+    }
+    const rSquared = ssTot > 0 ? 1 - (ssRes/ssTot) : 0;
+    return rSquared >= 0.85;
+  }
+
+  // ---------- fixed stop-time estimate from the locked window ----------
+  function computeFixedEstimate(times, speeds, currentSpeed){
+    if(currentSpeed <= 0.1) return 0;
+
+    const n = speeds.length;
+    let sumT=0, sumW=0, sumTW=0, sumT2=0;
+    const t0 = times[0];
+
+    for(let i=0;i<n;i++){
+      const t = times[i]-t0;
+      sumT += t; sumW += speeds[i]; sumTW += t*speeds[i]; sumT2 += t*t;
+    }
+
+    const decelRate = Math.abs((n*sumTW - sumT*sumW) / (n*sumT2 - sumT*sumT));
+    if(decelRate < 0.08 || isNaN(decelRate)) return null;
+
+    const linearTime = currentSpeed / decelRate;
+    const k = decelRate / Math.max(currentSpeed, 0.5);
+    const expTime = Math.log(currentSpeed / 0.1) / Math.max(k, 0.01);
+
+    let estimatedSec = (linearTime*0.80) + (expTime*0.20);
+    return Math.min(Math.max(estimatedSec, 2.0), 120.0);
+  }
+
+  function startEtaCountdown(){
+    function step(){
+      if(!isEstimateLocked || !targetStopTimeMs) return;
+      const remainingSec = Math.max(0, (targetStopTimeMs - Date.now())/1000);
+      etaVal.textContent = fmt(remainingSec,2) + 's';
+      if(remainingSec > 0){
+        etaTickHandle = requestAnimationFrame(step);
+      }
+    }
+    etaTickHandle = requestAnimationFrame(step);
+  }
+
+  // ---------- process inbound telemetry ----------
+  function parseData(jsonString){
+    if(!jsonString) return;
+    let data;
+    try{
+      data = JSON.parse(jsonString);
+    }catch(e){
+      return; // ignore non-json log lines
+    }
+
+    if(data.status) statusText.textContent = data.status;
+    if(data.speed === undefined) return;
+
+    sampleCount++;
+    const currentTime = sampleCount * 0.25;
+
+    if(!isEstimateLocked){
+      recentSpeeds.push(data.speed);
+      recentTimes.push(currentTime);
+      if(recentSpeeds.length > WINDOW_SIZE){
+        recentSpeeds.shift();
+        recentTimes.shift();
+      }
+
+      // lock the estimate the moment steady deceleration is confirmed
+      if(isConstantDeceleration(recentTimes, recentSpeeds)){
+        const fixedEtaSec = computeFixedEstimate(recentTimes, recentSpeeds, data.speed);
+        if(fixedEtaSec !== null && fixedEtaSec > 0){
+          lockedEtaTotal = fixedEtaSec + 5;
+          targetStopTimeMs = Date.now() + (lockedEtaTotal * 1000);
+          isEstimateLocked = true;
+          startEtaCountdown();
+        }
+      }
+    }
+
+    if(data.rpm !== undefined){
+      rpmVal.textContent = fmt(data.rpm, 2);
+      dataPoints.push({ t: currentTime, rpm: data.rpm });
+      drawGraph();
+    }
+
+    if(data.speed < 0.05 && sampleCount > 1){
+      etaVal.textContent = '0.00s';
+      statusText.textContent = 'stopped';
+      const finalSec = lockedEtaTotal !== null ? lockedEtaTotal : currentTime;
+      resultLine.textContent = 'your fan took ' + fmt(finalSec,2) + 's to stop spinning.';
+      if(etaTickHandle) cancelAnimationFrame(etaTickHandle);
+    }
+  }
+
+  sizeGraph();
+})();
+</script>
+
+</body>
+</html>
