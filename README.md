@@ -34,9 +34,6 @@ Arduino Uno
 Jumper wires
 IR proximity sensor
 For Hardware:
-- [List main components]
-- [List specifications]
-- [List tools required]
 
 ### Implementation
 For Software:
