@@ -6,7 +6,7 @@
 
 
 ## Basic Details
-### Team Name: [yearn]
+### Team Name: yearn
 
 
 ### Team Members
