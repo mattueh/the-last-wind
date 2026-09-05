@@ -49,7 +49,7 @@ For Software:
 ### Project Documentation
 For Software:
 
-# Screenshots (Add at least 3)
+# Screenshots 
 <img width="1891" height="780" alt="image" src="https://github.com/user-attachments/assets/56e65a0e-a9c2-4ef4-9cdb-7cac90c99f12" />
 
 Arduino ide usage
