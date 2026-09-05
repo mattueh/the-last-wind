@@ -2,7 +2,7 @@
 
 
 
-# [The Last Wind] 🎯
+# The Last Wind 🎯
 
 
 ## Basic Details
@@ -10,18 +10,18 @@
 
 
 ### Team Members
-- Member 1: [Navin] - [Jain University]
-- Member 2: [Mathew] - [Jain University]
+- Member 1: Navin - Jain University
+- Member 2: Mathew - Jain University
 
 ### Project Description
-[he Last Wind tells you how much time you have left before your fan completely stops spinning. 
-No more getting caught off guard by the sudden loss of breeze — now you know exactly when it's coming.]
+The Last Wind tells you how much time you have left before your fan completely stops spinning. 
+No more getting caught off guard by the sudden loss of breeze — now you know exactly when it's coming.
 
 ### The Problem (that doesn't exist)
-[The soul-crushing pain of having to abruptly move after your fan grinds to a halt, with zero warning.]
+The soul-crushing pain of having to abruptly move after your fan grinds to a halt, with zero warning.
 
 ### The Solution (that nobody asked for)
-[An IR proximity sensor watches the fan blades and feeds readings to a website over a serial connection. Press start, and it analyses the fan's deceleration to tell you exactly how much time you have before the breeze is gone for good.]
+An IR proximity sensor watches the fan blades and feeds readings to a website over a serial connection. Press start, and it analyses the fan's deceleration to tell you exactly how much time you have before the breeze is gone for good.
 
 ## Technical Details
 Technologies/Components Used
@@ -38,10 +38,10 @@ For Hardware:
 ### Implementation
 For Software:
 # Installation
-[commands]
+Have a browser and to make it you need arduino ide
 
 # Run
-[commands]
+In order to run the program you have to open your browser then press start after the fan turns off and it will give you a countdown.
 
 ### Project Documentation
 For Software:
@@ -92,15 +92,14 @@ arduino uno board and jumper wires
 the ir sensor detected the fan blade and when it begins to see that it is deacclerating it gives you an estimate on how much time is left until the blades stop spinning
 ### Project Demo
 # Video
-[Add your demo video link here]
-*Explain what the video demonstrates*
+https://youtu.be/oitEcI1U37Y?si=R2ah24GKtWZcZ2CM
+Demonstrates the hardware and how the hardware and software function
 
-# Additional Demos
-[Add any extra demo materials/links]
+
 
 ## Team Contributions
-- [Navin]: [Backend, Hardware]
-- [Mathew]: [Presentation, video editing, frontend]
+- Navin: Backend, Hardware
+- Mathew: Presentation, video editing, frontend
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
