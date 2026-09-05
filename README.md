@@ -2,34 +2,37 @@
 
 
 
-# [Project Name] 🎯
+# [The Last Wind] 🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: [yearn]
 
 
 ### Team Members
-- Member 1: [Name] - [Jain Univer]
-- Member 2: [Name] - [Jain]
+- Member 1: [Navin] - [Jain University]
+- Member 2: [Mathew] - [Jain University]
 
 ### Project Description
-[2-3 lines about what your project does]
+[he Last Wind tells you how much time you have left before your fan completely stops spinning. 
+No more getting caught off guard by the sudden loss of breeze — now you know exactly when it's coming.]
 
 ### The Problem (that doesn't exist)
-[What ridiculous problem are you solving?]
+[The soul-crushing pain of having to abruptly move after your fan grinds to a halt, with zero warning.]
 
 ### The Solution (that nobody asked for)
-[How are you solving it? Keep it fun!]
+[An IR proximity sensor watches the fan blades and feeds readings to a website over a serial connection. Press start, and it analyses the fan's deceleration to tell you exactly how much time you have before the breeze is gone for good.]
 
 ## Technical Details
-### Technologies/Components Used
+Technologies/Components Used
 For Software:
-- [Languages used]
-- [Frameworks used]
-- [Libraries used]
-- [Tools used]
-
+HTML
+JavaScript
+Arduino IDE
+For Hardware:
+Arduino Uno
+Jumper wires
+IR proximity sensor
 For Hardware:
 - [List main components]
 - [List specifications]
@@ -47,38 +50,49 @@ For Software:
 For Software:
 
 # Screenshots (Add at least 3)
-![Screenshot1](Add screenshot 1 here with proper name)
-*Add caption explaining what this shows*
+<img width="1891" height="780" alt="image" src="https://github.com/user-attachments/assets/56e65a0e-a9c2-4ef4-9cdb-7cac90c99f12" />
 
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
+Arduino ide usage
 
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+<img width="1386" height="587" alt="image" src="https://github.com/user-attachments/assets/99742005-ee78-44c8-8077-c82565c97df7" />
+our test website
+
+<img width="1027" height="582" alt="image" src="https://github.com/user-attachments/assets/0abbd0c1-4b5e-4892-b09a-7a5e8050ed9d" />
+
+our html code
+
 
 # Diagrams
-![Workflow](Add your workflow/architecture diagram here)
-*Add caption explaining your workflow*
+<img width="500" height="122" alt="image" src="https://github.com/user-attachments/assets/1d28f308-d1d0-476c-b489-cbf1aac30149" />
+
+shows the connection from the ir sensor to the website
 
 For Hardware:
 
 # Schematic & Circuit
-![Circuit](Add your circuit diagram here)
-*Add caption explaining connections*
+<img width="467" height="257" alt="image" src="https://github.com/user-attachments/assets/5fec48d5-f514-4d3b-b827-fc9960cb26fa" />
+
 
 ![Schematic](Add your schematic diagram here)
 *Add caption explaining the schematic*
 
 # Build Photos
-![Components](Add photo of your components here)
-*List out all components shown*
+<img width="198" height="166" alt="image" src="https://github.com/user-attachments/assets/71970425-ab62-42bf-8da2-d856bc6ab4a5" />
 
-![Build](Add photos of build process here)
-*Explain the build steps*
+ir proximity sensor
 
-![Final](Add photo of final product here)
-*Explain the final build*
+<img width="257" height="132" alt="image" src="https://github.com/user-attachments/assets/1a49a009-9cb7-48d7-9bae-cb397256a5ea" />
 
+arduino uno board and jumper wires
+
+
+
+<img width="900" height="1600" alt="image" src="https://github.com/user-attachments/assets/7357a8a4-b2c0-4f12-9fa0-aa242dcbd09b" />
+
+
+<img width="900" height="1600" alt="WhatsApp Image 2026-09-05 at 6 24 14 AM" src="https://github.com/user-attachments/assets/f717f171-85a5-46df-aac2-8a91131ff665" />
+
+the ir sensor detected the fan blade and when it begins to see that it is deacclerating it gives you an estimate on how much time is left until the blades stop spinning
 ### Project Demo
 # Video
 [Add your demo video link here]
@@ -88,9 +102,8 @@ For Hardware:
 [Add any extra demo materials/links]
 
 ## Team Contributions
-- [Name 1]: [Specific contributions]
-- [Name 2]: [Specific contributions]
-- [Name 3]: [Specific contributions]
+- [Navin]: [Backend, Hardware]
+- [Mathew]: [Presentation, video editing, frontend]
 
 ---
 Made with ❤️ at TinkerHub Useless Projects 
